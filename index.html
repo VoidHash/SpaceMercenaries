@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Space Mercenaries</title>
+    <script src="lib/easeljs-0.7.1.min.js"></script>
+    <script src="lib/tweenjs-0.5.1.min.js"></script>
+    <script src="lib/soundjs-0.5.2.min.js"></script>
+    <script src="lib/preloadjs-0.4.1.min.js"></script>
+</head>
+
+<body onload="init()" style="margin: 5px">
+
+<canvas id="canvas" width="800" height="600" style="border: black solid 1px"></canvas>
+
+</body>
+
+<script>
+
+	const KEYCODE_LEFT = 37, 
+		  KEYCODE_RIGHT = 39,
+		  KEYCODE_UP = 38, 
+		  KEYCODE_DOWN = 40;
+		  
+	var leftKeyDown, rightKeyDown, upKeyDown, downKeyDown = false;
+		  
+	var stage, queue, background, player;
+	
+	function init() {
+        stage = new createjs.Stage(document.getElementById('canvas'));
+        createjs.Ticker.addEventListener("tick", tick);
+        createjs.Ticker.setFPS(60);
+		
+		queue = new createjs.LoadQueue();
+		queue.addEventListener("complete", loadComplete);
+		queue.loadManifest([
+			{id:"background", src:"images/background.png"},
+			{id:"player", src:"images/player.png"},
+			{id:"enemy01", src:"images/spaceship01.png"},
+			{id:"enemy02", src:"images/spaceship02.png"},
+			{id:"enemy03", src:"images/spaceship03.png"}
+		]);	
+		
+		function loadComplete() {
+			stage01();
+		}
+		
+		function stage01(){
+			// Set Background 
+			var img = queue.getResult("background");
+			background = new createjs.Bitmap(img);
+			background.scaleX = 1
+			background.scaleY = 1;
+			background.x = 0;
+			stage.addChild(background);
+			
+			//ALL THE ASSETS MUST START AT X = 210
+			
+			//Set Player 72x72
+			var img = queue.getResult("player");
+			player = new createjs.Bitmap(img);
+			player.scaleX = 0.1;
+			player.scaleY = 0.1;
+			player.x = 350;
+			player.y = 500;
+			stage.addChild(player);
+			window.onkeydown = movePlayer;
+			window.onkeyup = stopPlayer;
+		}
+		
+		function movePlayer(e) {
+			e = !e ? window.event : e;
+			switch (e.keyCode) {
+				case KEYCODE_LEFT:
+					leftKeyDown = true;
+					break;
+				case KEYCODE_RIGHT:
+					rightKeyDown = true;
+					break;
+				case KEYCODE_UP:					
+					upKeyDown = true;
+					break;
+				case KEYCODE_DOWN:
+					downKeyDown = true;
+					break;
+			}
+		}
+		
+		function stopPlayer(e) {
+			e = !e ? window.event : e;
+			switch (e.keyCode) {
+				 case KEYCODE_LEFT:
+					leftKeyDown = false;
+					break;
+				case KEYCODE_RIGHT:
+					rightKeyDown = false;
+					break;
+				case KEYCODE_UP:
+					upKeyDown = false;
+					break;
+				case KEYCODE_DOWN:
+					downKeyDown = false;
+					break;
+			}
+		}
+		
+		function update() {
+			//console.log(player.x);
+			var nextX = player.x;
+			var nextY = player.y;
+			
+			if (leftKeyDown) {
+				nextX = player.x - 10;
+				if(nextX < 0){
+					nextX = 0;
+				}
+			}
+			else if (rightKeyDown) {
+				nextX = player.x + 10;
+				if(nextX > stage.canvas.width - 72){
+					nextX = stage.canvas.width - 72;
+				}
+			}
+			
+			if(upKeyDown){
+				nextY = player.y - 10;
+				if(nextY < 0){
+					nextY = 0;
+				}
+			} else if (downKeyDown) {
+				nextY = player.y + 10;
+				if(nextY > stage.canvas.height - 72){
+					nextY = stage.canvas.height - 72
+				}
+			}
+			
+			player.nextX = nextX;
+			player.nextY = nextY;
+		}
+		
+		function render() {
+			player.x = player.nextX;
+			player.y = player.nextY;
+		}
+		
+		function tick(e) {
+			update();
+			render();
+			stage.update();
+		}
+		
+		function spawnEnemies(){
+		
+		}
+    }
+	
+
+/*
+	function init() {
+
+		//Global Variavles
+			
+		var stage, background, player;
+		var queue;
+		var KEYCODE_LEFT = 37, 
+			KEYCODE_RIGHT = 39,
+			KEYCODE_UP = 38, 
+			KEYCODE_DOWN = 40;
+		
+		//Load Assetes
+		
+		queue = new createjs.LoadQueue();
+		queue.addEventListener("complete", loadComplete);
+		queue.loadManifest([
+			{id:"background", src:"images/background01.png"},
+			{id:"player", src:"images/player.png"},
+			{id:"enemy01", src:"images/spaceship01.png"},
+			{id:"enemy02", src:"images/spaceship02.png"},
+			{id:"enemy03", src:"images/spaceship03.png"}
+		]);	
+		
+		
+
+		
+		function loadComplete() {
+			setupStage();
+			
+			//Stage selection here;
+			stage01();
+		}
+		
+		function setupStage() {
+			stage = new createjs.Stage(document.getElementById('canvas'));
+			createjs.Ticker.setFPS(60);
+			createjs.Ticker.addEventListener("tick", function(){
+					
+				stage.update();
+			});
+		}
+		
+		function stage01(){
+			var background, player;
+		
+			// Set Background 
+			var img = queue.getResult("background");
+			background = new createjs.Bitmap(img);
+			background.scaleX = 0.34
+			background.scaleY = 0.34;
+			background.x = 210;
+			stage.addChild(background);
+			
+			//ALL THE ASSETS MUST START AT X = 210
+			
+			//Set Player
+			var img = queue.getResult("player");
+			player = new createjs.Bitmap(img);
+			player.scaleX = 0.1;
+			player.scaleY = 0.1;
+			player.x = 350;
+			player.y = 550;
+			stage.addChild(player);
+			this.document.onkeydown = keyPressed;
+			
+			function keyPressed(event) {
+				switch(event.keyCode) {
+					case KEYCODE_LEFT:	
+						player.x -= 10;
+						break;
+					case KEYCODE_RIGHT: 
+						player.x +=10; 
+						break;
+					case KEYCODE_UP: 
+						player.y -= 10;
+						break;
+					case KEYCODE_DOWN: 
+						player.y += 10
+						break;
+				}
+				stage.update();
+			}
+		}
+		
+		function tick(e) {
+			stage.update();
+		}
+	
+	}*/
+
+</script>
+
+</html>
