@@ -25,21 +25,23 @@
 		  
 	var leftKeyDown, rightKeyDown, upKeyDown, downKeyDown = false;
 		  
-	var stage, queue, background, player;
+	var stage, queue, background, player, bullet;
 	var enemy01;
 	
-	var enemies = [];
+	var b01_stats = {offSetX:30, offSetY:30, damage:10, scaleX: 1.3, scaleY: 1.3}
+	
+	//player status
 	
 	function init() {
-        stage = new createjs.Stage(document.getElementById('canvas'));
-        createjs.Ticker.addEventListener("tick", tick);
-        createjs.Ticker.setFPS(60);
+	
+		stage = new createjs.Stage(document.getElementById('canvas'));
 		
 		queue = new createjs.LoadQueue();
 		queue.addEventListener("complete", loadComplete);
 		queue.loadManifest([
 			{id:"background", src:"images/background.png"},
 			{id:"player", src:"images/player.png"},
+			{id:"bullet01", src:"images/bullet01.png"},
 			{id:"enemy01", src:"images/spaceship01.png"},
 			{id:"enemy02", src:"images/spaceship02.png"},
 			{id:"enemy03", src:"images/spaceship03.png"}
@@ -47,6 +49,9 @@
 		
 		function loadComplete() {
 			stage01();
+			
+			createjs.Ticker.addEventListener("tick", tick);
+			createjs.Ticker.setFPS(60);
 		}
 		
 		function stage01(){
@@ -133,7 +138,8 @@
 				case KEYCODE_RIGHT:
 					rightKeyDown = true;
 					break;
-				case KEYCODE_UP:					
+				case KEYCODE_UP:
+					fire();				
 					upKeyDown = true;
 					break;
 				case KEYCODE_DOWN:
@@ -209,110 +215,34 @@
 		function checkCollision(){
 			for(var i=0; i<stage.children.length; i++){
 				
-				if(stage.getChildAt(i).name == "enemy"){
+				if(stage.getChildAt(i).name == "enemy" || stage.getChildAt(i).name == "bullet"){
 					var intersection = ndgmr.checkRectCollision(stage.getChildAt(i), player);
 					if(intersection != null){
-						stage.removeChild(player);
-						stage.removeChild(enemy01);
+						//stage.removeChild(player);
+						stage.removeChildAt(i);
 						intersection = null;
 					}
 				}
 				
 			}
 		}
+		
+		function fire(){
+			//Basic Bullet
+			var img = queue.getResult("bullet01");
+			bullet = new createjs.Bitmap(img);
+			bullet.name = "bullet";
+			bullet.scaleX = b01_stats.scaleX;
+			bullet.scaleY = b01_stats.scaleY;
+			bullet.x = player.x + b01_stats.offSetX;
+			bullet.y = player.y - b01_stats.offSetY;
+			stage.addChild(bullet);
+			time  = Math.abs((bullet.y - (-500) ) / 1);
+			console.log("Time: "+time);
+			console.log("bulletY: "+bullet.y);
+			createjs.Tween.get(bullet).to({y:-250}, time);
+		}
     }
-	
-
-/*
-	function init() {
-
-		//Global Variavles
-			
-		var stage, background, player;
-		var queue;
-		var KEYCODE_LEFT = 37, 
-			KEYCODE_RIGHT = 39,
-			KEYCODE_UP = 38, 
-			KEYCODE_DOWN = 40;
-		
-		//Load Assetes
-		
-		queue = new createjs.LoadQueue();
-		queue.addEventListener("complete", loadComplete);
-		queue.loadManifest([
-			{id:"background", src:"images/background01.png"},
-			{id:"player", src:"images/player.png"},
-			{id:"enemy01", src:"images/spaceship01.png"},
-			{id:"enemy02", src:"images/spaceship02.png"},
-			{id:"enemy03", src:"images/spaceship03.png"}
-		]);	
-		
-		
-
-		
-		function loadComplete() {
-			setupStage();
-			
-			//Stage selection here;
-			stage01();
-		}
-		
-		function setupStage() {
-			stage = new createjs.Stage(document.getElementById('canvas'));
-			createjs.Ticker.setFPS(60);
-			createjs.Ticker.addEventListener("tick", function(){
-					
-				stage.update();
-			});
-		}
-		
-		function stage01(){
-			var background, player;
-		
-			// Set Background 
-			var img = queue.getResult("background");
-			background = new createjs.Bitmap(img);
-			background.scaleX = 0.34
-			background.scaleY = 0.34;
-			background.x = 210;
-			stage.addChild(background);
-			
-			//ALL THE ASSETS MUST START AT X = 210
-			
-			//Set Player
-			var img = queue.getResult("player");
-			player = new createjs.Bitmap(img);
-			player.scaleX = 0.1;
-			player.scaleY = 0.1;
-			player.x = 350;
-			player.y = 550;
-			stage.addChild(player);
-			this.document.onkeydown = keyPressed;
-			
-			function keyPressed(event) {
-				switch(event.keyCode) {
-					case KEYCODE_LEFT:	
-						player.x -= 10;
-						break;
-					case KEYCODE_RIGHT: 
-						player.x +=10; 
-						break;
-					case KEYCODE_UP: 
-						player.y -= 10;
-						break;
-					case KEYCODE_DOWN: 
-						player.y += 10
-						break;
-				}
-				stage.update();
-			}
-		}
-		
-		function tick(e) {
-			stage.update();
-		}
-	
-	}*/
 
 </script>
 
