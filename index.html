@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -8,6 +9,7 @@
     <script src="lib/preloadjs-0.4.1.min.js"></script>
 	
 	<script src="lib/ndgmr.Collision.js"></script>
+	<link href="https://fonts.googleapis.com/css?family=Orbitron" rel="stylesheet">
 </head>
 
 <body onload="init()" style="margin: 5px">
@@ -21,27 +23,34 @@
 	const KEYCODE_LEFT = 37, 
 		  KEYCODE_RIGHT = 39,
 		  KEYCODE_UP = 38, 
-		  KEYCODE_DOWN = 40;
+		  KEYCODE_DOWN = 40,
+		  SPACE_BAR = 32;
 		  
-	var leftKeyDown, rightKeyDown, upKeyDown, downKeyDown = false;
+	var leftKeyDown, rightKeyDown, upKeyDown, downKeyDown, spaceKeyDown = false;
 		  
-	var stage, queue, background, player, bullet;
-	var enemy01;
+	var stage, queue, background, player, bullet, cd=0, time_stage = 0;
+	var enemy01, enemy02, enemy03, enemy04, enemy05, spritesheet, explode;
 	
 	//Basic Bullet Stats
-	var b01_stats = {offSetX:30, offSetY:30, damage:10, scaleX: 1.3, scaleY: 1.3}
-	
+	var bullet01_stats = {offSetX:30, offSetY:30, damage:10, scaleX: 1.3, scaleY: 1.3, cd: 250}
 	
 	//Boss 01 Stats
 	var boss_stats = {offSetX:30, offSetY:30, damage:10, scaleX: 0.5, scaleY: 0.5}
 	
+	//Enemies Stats
+	var enemy_stats = {health: 30, damage: 10};
+	
 	//player status
+	var player_stats = {health: 100, bullet:1}
+	
+	var score=0, score_text, high_score;
 	
 	function init() {
 	
 		stage = new createjs.Stage(document.getElementById('canvas'));
 		
 		queue = new createjs.LoadQueue();
+		queue.installPlugin(createjs.Sound);
 		queue.addEventListener("complete", loadComplete);
 		queue.loadManifest([
 			{id:"background", src:"images/background.png"},
@@ -51,18 +60,24 @@
 			{id:"enemy01", src:"images/spaceship01.png"},
 			{id:"enemy02", src:"images/spaceship02.png"},
 			{id:"enemy03", src:"images/spaceship03.png"},
-			{id:"boss", src:"images/boss.png"}
+			{id:"enemy04", src:"images/spaceship04.png"},
+			{id:"enemy05", src:"images/spaceship05.png"},
+			{id:"boss", src:"images/boss.png"},
+			{id:"bullet_sound01", src:"sounds/bullet01.mp3"},
+			{id:"explosion_enemy", src:"sounds/explosion01.mp3"},
+			{id:"explosion_sprite", src:"images/explosion_sprite.png"}
 			
-		]);	
+		]);
+		
 		
 		function loadComplete() {
-			stage01();
+			assets_stage01();
 			
 			createjs.Ticker.addEventListener("tick", tick);
 			createjs.Ticker.setFPS(60);
 		}
 		
-		function stage01(){
+		function assets_stage01(){
 			// Set Background 
 			var img = queue.getResult("background");
 			background = new createjs.Bitmap(img);
@@ -70,6 +85,15 @@
 			background.scaleY = 1;
 			background.x = 0;
 			stage.addChild(background);
+			
+			score_text = new createjs.Text();
+			score_text.font = "bold 30px Orbitron";
+			score_text.color= "#FFFFFF";
+			score_text.text = "SCORE: 0";
+			score_text.shadown = true;
+			score_text.x = 20;
+			score_text.y = 10;
+			stage.addChild(score_text);
 			
 			//Set Player 72x72
 			var img = queue.getResult("player");
@@ -83,6 +107,7 @@
 			window.onkeydown = movePlayer;
 			window.onkeyup = stopPlayer;
 			
+			/*
 			var img = queue.getResult("boss");
 			boss = new createjs.Bitmap(img);
 			boss.name = "boss";
@@ -91,9 +116,8 @@
 			boss.scaleX = boss_stats.scaleX;
 			boss.scaleY = boss_stats.scaleY;
 			stage.addChild(boss);
+			*/
 			
-			
-			/*
 			
 			// 0, 160, 320, 480, 640
 			
@@ -103,50 +127,59 @@
 			enemy01.scaleX = 0.1;
 			enemy01.scaleY = 0.1;
 			enemy01.rotation = 180;
-			enemy01.x = 0;
-			enemy01.y = 250;
-			stage.addChild(enemy01);
+			enemy01.st = enemy_stats;
+			//stage.addChild(enemy01);
 			
-			var img = queue.getResult("enemy01");
-			enemy01 = new createjs.Bitmap(img);
-			enemy01.name = "enemy";
-			enemy01.scaleX = 0.1;
-			enemy01.scaleY = 0.1;
-			enemy01.rotation = 180;
-			enemy01.x = 160;
-			enemy01.y = 250;
-			stage.addChild(enemy01);
+			var img = queue.getResult("enemy02");
+			enemy02 = new createjs.Bitmap(img);
+			enemy02.name = "enemy";
+			enemy02.scaleX = 0.2;
+			enemy02.scaleY = 0.2;
+			enemy02.rotation = 180;
+			//stage.addChild(enemy02);
 			
-			var img = queue.getResult("enemy01");
-			enemy01 = new createjs.Bitmap(img);
-			enemy01.name = "enemy";
-			enemy01.scaleX = 0.1;
-			enemy01.scaleY = 0.1;
-			enemy01.rotation = 180;
-			enemy01.x = 320;
-			enemy01.y = 150;
-			stage.addChild(enemy01);
+			var img = queue.getResult("enemy03");
+			enemy03 = new createjs.Bitmap(img);
+			enemy03.name = "enemy";
+			enemy03.scaleX = 0.2;
+			enemy03.scaleY = 0.2;
+			enemy03.rotation = 180;
+			//stage.addChild(enemy03);
 			
-			var img = queue.getResult("enemy01");
-			enemy01 = new createjs.Bitmap(img);
-			enemy01.name = "enemy";
-			enemy01.scaleX = 0.1;
-			enemy01.scaleY = 0.1;
-			enemy01.rotation = 180;
-			enemy01.x = 480;
-			enemy01.y = 250;
-			stage.addChild(enemy01);
+			var img = queue.getResult("enemy04");
+			enemy04 = new createjs.Bitmap(img);
+			enemy04.name = "enemy";
+			enemy04.scaleX = 0.2;
+			enemy04.scaleY = 0.2;
+			enemy04.rotation = 180;
+			//stage.addChild(enemy04);
 			
-			var img = queue.getResult("enemy01");
-			enemy01 = new createjs.Bitmap(img);
-			enemy01.name = "enemy";
-			enemy01.scaleX = 0.1;
-			enemy01.scaleY = 0.1;
-			enemy01.rotation = 180;
-			enemy01.x = 640;
-			enemy01.y = 150;
-			stage.addChild(enemy01);
-			*/
+			var img = queue.getResult("enemy05");
+			enemy05 = new createjs.Bitmap(img);
+			enemy05.name = "enemy";
+			enemy05.scaleX = 0.2;
+			enemy05.scaleY = 0.2;
+			enemy05.rotation = 180;
+			//stage.addChild(enemy05);
+			
+			//Basic Bullet
+			var img = queue.getResult("bullet01");
+			bullet = new createjs.Bitmap(img);
+			bullet.name = "bullet";
+			bullet.scaleX = bullet01_stats.scaleX;
+			bullet.scaleY = bullet01_stats.scaleY;	
+			bullet.st = bullet01_stats;
+			
+			explode = {
+				images: [queue.getResult("explosion_sprite")],
+				frames: {width:128, height:128, count: 16},
+				animations: {
+					explode:[0,15],
+					framerate: 20
+				}
+			};
+			spriteSheet = new createjs.SpriteSheet(explode);
+			explode = new createjs.Sprite(spriteSheet, "explode");
 			
 		}
 		
@@ -159,12 +192,14 @@
 				case KEYCODE_RIGHT:
 					rightKeyDown = true;
 					break;
-				case KEYCODE_UP:
-					fire();				
+				case KEYCODE_UP:	
 					upKeyDown = true;
 					break;
 				case KEYCODE_DOWN:
 					downKeyDown = true;
+					break;
+				case SPACE_BAR:
+					spaceKeyDown = true;
 					break;
 			}
 		}
@@ -184,11 +219,18 @@
 				case KEYCODE_DOWN:
 					downKeyDown = false;
 					break;
+				case SPACE_BAR:
+					spaceKeyDown = false;
+					break;
+				
+					
 			}
 		}
 		
 		function update() {
-			//console.log(player.x);
+		
+			//The Player gonna move here
+			
 			var nextX = player.x;
 			var nextY = player.y;
 			
@@ -219,6 +261,17 @@
 			
 			player.nextX = nextX;
 			player.nextY = nextY;
+			
+			//Player gonna shoot here
+			//console.log(spaceKeyDown);
+			if(spaceKeyDown) {
+				//cooldown between 5 - 10
+				cd++;
+				if(cd == 10){
+					fire();
+					cd=0;
+				}
+			}
 		}
 		
 		function render() {
@@ -230,13 +283,23 @@
 			update();
 			render();
 			checkCollision();
+			time_stage++;
+			stage01();
+			
 			stage.update();
 		}
 		
 		function checkCollision(){
 			for(var i=0; i<stage.children.length; i++){
-				
-				if(stage.getChildAt(i).name == "enemy" || stage.getChildAt(i).name == "bullet"){
+			
+				if(stage.getChildAt(i).name == "enemy"){
+					var intersection = ndgmr.checkRectCollision(stage.getChildAt(i), player);
+					if(intersection != null){
+						//stage.removeChild(player);
+						stage.removeChildAt(i);
+						intersection = null;
+					}
+					
 					var intersection = ndgmr.checkRectCollision(stage.getChildAt(i), player);
 					if(intersection != null){
 						//stage.removeChild(player);
@@ -245,23 +308,108 @@
 					}
 				}
 				
+				if(stage.getChildAt(i).y <= -200 || stage.getChildAt(i).y >= 800 || 
+				stage.getChildAt(i).x <= -200 || stage.getChildAt(i).x >= 1000){
+					stage.removeChildAt(i);
+					console.log("Dead Zone");
+				}
+				
+				
 			}
 		}
 		
 		function fire(){
-			//Basic Bullet
-			var img = queue.getResult("bullet01");
-			bullet = new createjs.Bitmap(img);
-			bullet.name = "bullet";
-			bullet.scaleX = b01_stats.scaleX;
-			bullet.scaleY = b01_stats.scaleY;
-			bullet.x = player.x + b01_stats.offSetX;
-			bullet.y = player.y - b01_stats.offSetY;
-			stage.addChild(bullet);
-			time  = Math.abs((bullet.y - (-50) ) / 200);
-			console.log("Time: "+time);
-			console.log("bulletY: "+bullet.y);
-			createjs.Tween.get(bullet).to({y:-250}, time);
+			
+			var the_bullet = bullet.clone();
+			the_bullet.x = player.x + bullet01_stats.offSetX;
+			the_bullet.y = player.y - bullet01_stats.offSetY;
+			the_bullet.st = bullet01_stats;
+			stage.addChild(the_bullet);
+			time  = (the_bullet.y + 200 ) / 0.99;
+			createjs.Tween.get(the_bullet).to({y:-200}, time);
+			
+			the_bullet.addEventListener("tick", collisionEvent);
+			createjs.Sound.play("bullet_sound01",{volume: 0.1});
+			
+			function collisionEvent(event) {
+			
+				for(var i=0; i<stage.children.length; i++){
+					if(stage.getChildAt(i).name == "enemy"){
+						var intersection = ndgmr.checkRectCollision(stage.getChildAt(i), the_bullet);
+						if(intersection != null){
+							stage.getChildAt(i).st.health -= the_bullet.st.damage;
+							if(stage.getChildAt(i).st.health <= 0){
+								
+								score = score + 10;
+								score_text.text = "SCORE: "+score;
+								createjs.Sound.play("explosion_enemy",{volume: 0.3});
+								explode.x=stage.getChildAt(i).x;
+								explode.y=stage.getChildAt(i).y;
+								stage.addChild(explode);
+								stage.removeChildAt(i);
+							}
+							stage.removeChild(the_bullet);
+							intersection = null;
+						}
+					}		
+				}
+			}
+		}
+		
+		function stage01(){
+			if(time_stage % 60*3 == 0){
+				wave02(enemy01, 100, -100, 1);
+				wave03(enemy01, 100, -100, 1);				
+				/*
+				wave01(enemy01, 200, -100, 2);
+				wave01(enemy01, 300, -100, 3);
+				wave01(enemy01, 400, -100, 4);
+				wave01(enemy01, 500, -100, 5);
+				wave01(enemy01, 600, -100, 6);
+				wave01(enemy01, 700, -100, 7);
+				*/
+				time_stage=0;
+			}
+		}
+		
+		function wave01(enemyX, posX, posY, next){
+			enemy = enemyX.clone();
+			enemy.x = posX;
+			enemy.y = posY;
+			stage.addChild(enemy);
+			time  = (Math.abs(posY)+600 ) / 0.4; //time = 2000ms
+			createjs.Tween.get(enemy).wait(250*next).to({y:800}, time);
+		}
+		
+		
+		function wave02(enemyX, posX, posY, next){
+			enemy = enemyX.clone();
+			enemy.x = posX;
+			enemy.y = posY;
+			enemy.st = enemy_stats;
+			stage.addChild(enemy);
+			//time  = (Math.abs(posY)+600 ) / 0.4; //time = 2000ms
+			createjs.Tween.get(enemy).wait(250*next)
+			.to({y:100}, 500)
+			.to({y:250, x:750}, 1000)
+			.to({y:400, x:50}, 1000)
+			.to({y:550, x:750}, 1000)
+			.to({y:800}, 500);
+		}
+		
+		function wave03(enemyX, posX, posY, next){
+			enemy = enemyX.clone();
+			enemy.x = posX;
+			enemy.y = posY;
+			enemy.st = enemy_stats;
+			stage.addChild(enemy);
+			//time  = (Math.abs(posY)+600 ) / 0.4; //time = 2000ms
+			createjs.Tween.get(enemy).wait(250*next)
+			.to({y:100, x: 750}, 500)
+			.to({y:250, x:50}, 1000)
+			.to({y:400, x:750}, 1000)
+			.to({y:550, x:50}, 1000)
+			.to({y:800}, 500);
 		}
     }
 
