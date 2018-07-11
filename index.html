@@ -29,7 +29,7 @@
 	var leftKeyDown, rightKeyDown, upKeyDown, downKeyDown, spaceKeyDown = false;
 		  
 	var stage, queue, background, player, bullet, cd=0, time_stage = 0;
-	var enemy01, enemy02, enemy03, enemy04, enemy05, spritesheet, explode;
+	var enemy01, enemy02, enemy03, enemy04, enemy05, spritesheet, explode, data_sprite, explode_fx;
 	
 	//Basic Bullet Stats
 	var bullet01_stats = {offSetX:30, offSetY:30, damage:10, scaleX: 1.3, scaleY: 1.3, cd: 250}
@@ -43,7 +43,7 @@
 	//player status
 	var player_stats = {health: 100, bullet:1}
 	
-	var score=0, score_text, high_score;
+	var score=0, score_text, health=100, health_txt, lives=3, lives_txt, high_score;
 	
 	function init() {
 	
@@ -95,6 +95,24 @@
 			score_text.y = 10;
 			stage.addChild(score_text);
 			
+			health_txt = new createjs.Text();
+			health_txt.font = "bold 30px Orbitron";
+			health_txt.color= "#FFFFFF";
+			health_txt.text = "ENERGY: 100";
+			health_txt.shadown = true;
+			health_txt.x = 550;
+			health_txt.y = 10;
+			stage.addChild(health_txt);
+			
+			lives_txt = new createjs.Text();
+			lives_txt.font = "bold 30px Orbitron";
+			lives_txt.color= "#FFFFFF";
+			lives_txt.text = "Lives: 3";
+			lives_txt.shadown = true;
+			lives_txt.x = 625;
+			lives_txt.y = 550;
+			stage.addChild(lives_txt);
+			
 			//Set Player 72x72
 			var img = queue.getResult("player");
 			player = new createjs.Bitmap(img);
@@ -103,6 +121,7 @@
 			player.scaleY = 0.1;
 			player.x = 350;
 			player.y = 500;
+			player.st = player_stats;
 			stage.addChild(player);
 			window.onkeydown = movePlayer;
 			window.onkeyup = stopPlayer;
@@ -128,6 +147,7 @@
 			enemy01.scaleY = 0.1;
 			enemy01.rotation = 180;
 			enemy01.st = enemy_stats;
+			
 			//stage.addChild(enemy01);
 			
 			var img = queue.getResult("enemy02");
@@ -178,8 +198,20 @@
 					framerate: 20
 				}
 			};
-			spriteSheet = new createjs.SpriteSheet(explode);
-			explode = new createjs.Sprite(spriteSheet, "explode");
+			data_sprite = {
+				images: [queue.getResult("explosion_sprite")],
+				frames: {width:128, height:128, count: 16},
+				animations: {
+					explode:{
+						frames:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
+						next: false,
+						speed: 0.6
+					}
+				}
+			};
+			spriteSheet = new createjs.SpriteSheet(data_sprite);
+			
+			explode_fx = new createjs.Sprite(spriteSheet, "explode");
 			
 		}
 		
@@ -295,13 +327,25 @@
 				if(stage.getChildAt(i).name == "enemy"){
 					var intersection = ndgmr.checkRectCollision(stage.getChildAt(i), player);
 					if(intersection != null){
-						//stage.removeChild(player);
-						stage.removeChildAt(i);
-						intersection = null;
-					}
-					
-					var intersection = ndgmr.checkRectCollision(stage.getChildAt(i), player);
-					if(intersection != null){
+						if(player.st.health > 0){
+							health = health - stage.getChildAt(i).st.damage;
+							player.st.health = health;
+							health_txt.text = "HEALTH: " + health;
+							explode = explode_fx.clone();
+							explode.x=stage.getChildAt(i).x -50;
+							explode.y=stage.getChildAt(i).y -50;
+							explode.addEventListener("animationend", endAnimation);
+							function endAnimation(event) {
+								stage.removeChild(explode);
+							 }
+							stage.addChild(explode);
+						}else{
+							console.log("dsadsasdasd ");
+							lives--;
+							lives_txt.text = "LIVES: " + lives;
+							player.y = 1000
+							stage.removeChild(player);
+						}
 						//stage.removeChild(player);
 						stage.removeChildAt(i);
 						intersection = null;
@@ -336,16 +380,22 @@
 				for(var i=0; i<stage.children.length; i++){
 					if(stage.getChildAt(i).name == "enemy"){
 						var intersection = ndgmr.checkRectCollision(stage.getChildAt(i), the_bullet);
-						if(intersection != null){
+						if(intersection != null){							
 							stage.getChildAt(i).st.health -= the_bullet.st.damage;
 							if(stage.getChildAt(i).st.health <= 0){
 								
 								score = score + 10;
 								score_text.text = "SCORE: "+score;
 								createjs.Sound.play("explosion_enemy",{volume: 0.3});
-								explode.x=stage.getChildAt(i).x;
-								explode.y=stage.getChildAt(i).y;
+								explode = explode_fx.clone();
+								explode.x=stage.getChildAt(i).x -50;
+								explode.y=stage.getChildAt(i).y -50;
+								explode.addEventListener("animationend", endAnimation);
+								function endAnimation(event) {
+									stage.removeChild(explode);
+								 }
 								stage.addChild(explode);
+
 								stage.removeChildAt(i);
 							}
 							stage.removeChild(the_bullet);
@@ -376,6 +426,7 @@
 			enemy = enemyX.clone();
 			enemy.x = posX;
 			enemy.y = posY;
+			enemy.st = enemy_stats;
 			stage.addChild(enemy);
 			time  = (Math.abs(posY)+600 ) / 0.4; //time = 2000ms
 			createjs.Tween.get(enemy).wait(250*next).to({y:800}, time);
