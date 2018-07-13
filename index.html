@@ -334,6 +334,7 @@
 							explode = explode_fx.clone();
 							explode.x=stage.getChildAt(i).x -50;
 							explode.y=stage.getChildAt(i).y -50;
+							
 							explode.addEventListener("animationend", endAnimation);
 							function endAnimation(event) {
 								stage.removeChild(explode);
