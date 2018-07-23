@@ -46,7 +46,7 @@
 	
 	var score=0, score_text, health=100, health_txt, lives=3, lives_txt, high_score;
 	
-	var the_music, isAlive = true;
+	var the_music, isAlive = true, stage_difficulty, stage_loop= 0;
 	
 	var gameOver_text, stage_text, title_text;
 	
@@ -88,7 +88,7 @@
 		
 		
 		function loadComplete() {
-			stage03();
+			stage01();
 			loadAssets();
 			createjs.Ticker.addEventListener("tick", tick);
 			createjs.Ticker.setFPS(60);
@@ -288,8 +288,9 @@
 		
 			//Play Stage 01 Music
 			createjs.Sound.stop();
-			createjs.Sound.play("stage01_music", {volume: 0.8,  loop: -1});
+			createjs.Sound.play("stage01_music", {volume: 1,  loop: -1});
 
+			stage_difficulty = 1;
 		
 			// Set Background 
 			var img = queue.getResult("background");
@@ -305,52 +306,45 @@
 				
 			}
 			stage.addChild(background);
+			
+			stage_text = new createjs.Text();
+			stage_text.font = "bold 30px Orbitron";
+			stage_text.color= "#FFFFFF";
+			stage_text.text = "STAGE 01";
+			stage_text.shadown = true;
+			stage_text.x = 20;
+			stage_text.y = 550;
+			stage.addChild(stage_text);
 		}
 		
 		function stage02(){
-		
+			
 			//Play Stage 01 Music
 			createjs.Sound.stop();
-			createjs.Sound.play("stage02_music", {volume: 0.8,  loop: -1});
+			createjs.Sound.play("stage02_music", {volume: 1,  loop: -1});
 
-		
+			stage_difficulty = 2;
+			
 			// Set Background 
 			var img = queue.getResult("background02");
-			background = new createjs.Bitmap(img);
-			background.name = "background";
-			background.y = -1200;
-			background.addEventListener("tick", bgTick);
-			function bgTick(event) {
-				background.y= background.y + 0.5;
-				if(background.y == 0){
-					background.y = -1200;
-				}
-				
-			}
-			stage.addChild(background);
+			background.image = img;
+			
+			stage_text.text = "STAGE 02";
 		}
 		
 		function stage03(){
 		
 			//Play Stage 01 Music
 			createjs.Sound.stop();
-			createjs.Sound.play("stage03_music", {volume: 0.8,  loop: -1});
+			createjs.Sound.play("stage03_music", {volume: 1,  loop: -1});
 
+			stage_difficulty = 3;
 		
 			// Set Background 
 			var img = queue.getResult("background03");
-			background = new createjs.Bitmap(img);
-			background.name = "background";
-			background.y = -1200;
-			background.addEventListener("tick", bgTick);
-			function bgTick(event) {
-				background.y= background.y + 0.5;
-				if(background.y == 0){
-					background.y = -1200;
-				}
-				
-			}
-			stage.addChild(background);
+			background.image = img;
+			
+			stage_text.text = "STAGE 03";
 		}
 		
 		function movePlayer(e) {
@@ -452,8 +446,8 @@
 			update();
 			render();
 			checkCollision();
-			stage01();
 			stage.update();
+			spawn_enemies();
 			time_stage++;
 		}
 		
@@ -484,7 +478,7 @@
 								player.y = 801;
 								stage.addChild(gameOver_text);
 								createjs.Sound.stop();
-								createjs.Sound.play("death_music",{volume: 0.8, loop: -1});
+								createjs.Sound.play("death_music",{volume: 1, loop: -1});
 							}
 							
 							
@@ -517,7 +511,7 @@
 			createjs.Tween.get(the_bullet).to({y:-200}, time);
 			
 			the_bullet.addEventListener("tick", collisionEvent);
-			createjs.Sound.play("bullet_sound01",{volume: 0.1});
+			createjs.Sound.play("bullet_sound01",{volume: 0.3});
 			
 			function collisionEvent(event) {
 			
@@ -542,7 +536,7 @@
 		}
 		
 		function kaboon(gameObject){
-			createjs.Sound.play("explosion_enemy",{volume: 0.3});
+			createjs.Sound.play("explosion_enemy",{volume: 0.4});
 			var explode = explode_fx.clone();
 			explode.x=gameObject.x-60;
 			explode.y=gameObject.y-60;
@@ -553,9 +547,9 @@
 			stage.addChild(explode);
 		}
 		
-		function stage01(){
+		function spawn_enemies(){
 			
-			if(time_stage  == 60*3){
+			if(time_stage  == 60*5){
 				wave02(enemy02, 100, -100, 1);
 				wave03(enemy03, 100, -100, 1);	
 				wave02(enemy02, 100, -100, 2);
@@ -568,7 +562,7 @@
 				wave03(enemy03, 100, -100, 4);
 			}
 			
-			if(time_stage == 60*6){
+			if(time_stage == 60*8){
 				wave01(enemy01, 100, -100, 1);
 				wave01(enemy01, 200, -100, 2);
 				wave01(enemy01, 300, -100, 3);
@@ -578,40 +572,51 @@
 				wave01(enemy01, 700, -100, 7);
 			}
 			
-			if(time_stage == 60*8){
+			if(time_stage == 60*10){
 				wave01(enemy04, 700, -100, 1);
 				wave01(enemy04, 600, -100, 2);
 				wave01(enemy04, 500, -100, 3);
 				wave01(enemy04, 400, -100, 4);
-				wave01(enemy04, 500, -100, 5);
-				wave01(enemy04, 300, -100, 6);
-				wave01(enemy04, 200, -100, 7);
-				wave01(enemy04, 100, -100, 8);
+				wave01(enemy04, 300, -100, 5);
+				wave01(enemy04, 200, -100, 6);
+				wave01(enemy04, 100, -100, 7);
 			}
 			
 			
-			if(time_stage == 60*10){
+			if(time_stage == 60*12){
 				wave04(enemy05, 400, -100, 1);
-				wave05(enemy06, 400, -100, 1.5);
-				wave04(enemy05, 400, -100, 2);
-				wave05(enemy06, 400, -100, 2.5);
-				wave04(enemy05, 400, -100, 1);
-				wave05(enemy06, 400, -100, 1.5);
-				wave04(enemy05, 400, -100, 2);
-				wave05(enemy06, 400, -100, 2.5);
+				wave05(enemy06, 400, -100, 2);
+				wave04(enemy05, 400, -100, 3);
+				wave05(enemy06, 400, -100, 4);
+				wave04(enemy05, 400, -100, 5);
+				wave05(enemy06, 400, -100, 6);
+				wave04(enemy05, 400, -100, 7);
+				wave05(enemy06, 400, -100, 8);
+				wave04(enemy05, 400, -100, 9);
+				wave05(enemy06, 400, -100, 10);
+				wave04(enemy05, 400, -100, 11);
+				wave05(enemy06, 400, -100, 12);
 				
 			}
 			
-			if(time_stage == 60*13){
+			if(time_stage == 60*15){
 				wave06(enemy07, 400, -100, 1);
-				wave07(enemy08, 400, -100, 1.5);
-				wave06(enemy07, 400, -100, 2);
-				wave07(enemy08, 400, -100, 2.5);
-				wave06(enemy07, 400, -100, 1);
-				wave07(enemy08, 400, -100, 1.5);
-				wave06(enemy07, 400, -100, 2);
-				wave07(enemy08, 400, -100, 2.5);
+				wave07(enemy08, 400, -100, 1);
+				wave06(enemy07, 400, -100, 3);
+				wave07(enemy08, 400, -100, 4);
+				wave06(enemy07, 400, -100, 5);
+				wave07(enemy08, 400, -100, 6);
+				wave06(enemy07, 400, -100, 7);
+				wave07(enemy08, 400, -100, 8);
+				wave06(enemy07, 400, -100, 9);
+				wave07(enemy08, 400, -100, 10);
+				wave06(enemy07, 400, -100, 11);
+				wave07(enemy08, 400, -100, 12);
 				
+			}
+			
+			if(time_stage == 60*20){
+				stage_loop++;
 				time_stage=0;
 			}
 			
@@ -620,6 +625,14 @@
 				wave01(enemy08, 100, -100, 1);
 			}
 			*/
+			
+			if(stage_loop == 2){
+				stage02();
+			}
+			
+			if(stage_loop == 4){
+				stage03();
+			}
 		}
 		
 		function enemy_attack(event){
@@ -648,6 +661,7 @@
 			enemy.x = posX;
 			enemy.y = posY;
 			enemy.st = enemy_stats;
+			enemy.st.health = enemy.st.health * stage_difficulty;
 			enemy.addEventListener("tick", enemy_attack);
 
 			stage.addChild(enemy);
@@ -679,6 +693,7 @@
 			enemy.x = posX;
 			enemy.y = posY;
 			enemy.st = enemy_stats;
+			console.log(enemy.st.health);
 			
 			enemy.addEventListener("tick", enemy_attack);
 			stage.addChild(enemy);
