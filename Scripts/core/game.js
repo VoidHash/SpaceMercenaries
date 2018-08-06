@@ -15,7 +15,7 @@
         "animations": {
             "explode": {
                 "frames": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-                //next: false,
+                next: false,
                 "speed": 0.6
             }
         }
@@ -47,7 +47,7 @@
         { id: "stage03_music", src: "./assets/sounds/level3.mp3" },
         { id: "intro_music", src: "./assets/sounds/intro.mp3" },
         { id: "boss_music", src: "./assets/sounds/boss.mp3" },
-        { id: "death_music", src: "./assets/sounds/death.mp3" },
+        { id: "end_music", src: "./assets/sounds/death.mp3" },
     ];
     function Init() {
         console.log("Initialization Started");
@@ -64,6 +64,8 @@
         createjs.Ticker.framerate = 60; // 60 FPS
         createjs.Ticker.on("tick", Update);
         objects.Game.stage = stage;
+        objects.Game.high_score = 0;
+        objects.Game.current_score = 0;
         //Set the Start Scene
         objects.Game.currentScene = config.Scene.START;
         currentState = config.Scene.START;
@@ -87,11 +89,20 @@
             case config.Scene.START:
                 currentScene = new scenes.StartScene(assetManager);
                 break;
-            case config.Scene.PLAY:
-                currentScene = new scenes.PlayScene(assetManager);
+            case config.Scene.STAGE01:
+                currentScene = new scenes.Stage01(assetManager);
+                //currentScene = new scenes.OverScene(assetManager);
+                break;
+            case config.Scene.STAGE02:
+                currentScene = new scenes.Stage02(assetManager);
+                //currentScene = new scenes.OverScene(assetManager);
+                break;
+            case config.Scene.STAGE03:
+                currentScene = new scenes.Stage03(assetManager);
+                //currentScene = new scenes.OverScene(assetManager);
                 break;
             case config.Scene.OVER:
-                //currentScene = new scenes.OverScene(assetManager);
+                currentScene = new scenes.OverScene(assetManager);
                 break;
         }
         currentState = objects.Game.currentScene;

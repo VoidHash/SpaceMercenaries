@@ -19,7 +19,7 @@ module scenes {
         //Private Methods
 
         private _startButtonClick(): void {
-            objects.Game.currentScene = config.Scene.PLAY;
+            objects.Game.currentScene = config.Scene.STAGE01;
         }
 
         //Public Methods

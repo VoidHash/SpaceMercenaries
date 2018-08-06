@@ -1,5 +1,5 @@
 module scenes {
-    export class PlayScene extends objects.Scene {
+    export class Stage02 extends objects.Scene {
 
         //Private Instance Variables
         private _background: objects.Background;
@@ -51,7 +51,7 @@ module scenes {
         public Start(): void {
 
             objects.Scene.music.stop();
-            objects.Scene.music = createjs.Sound.play("stage01_music");
+            objects.Scene.music = createjs.Sound.play("stage02_music");
             objects.Scene.music.loop = -1;
             objects.Scene.music.volume = 1;
 
@@ -72,7 +72,7 @@ module scenes {
 			this._bullet =  new objects.Bullet(this.assetManager, "bullet01");
 			this._enemy_blt = new objects.Bullet(this.assetManager, "bullet02");
 
-            this._background = new objects.Background(this.assetManager,"background");
+            this._background = new objects.Background(this.assetManager,"background02");
             this._player = new objects.Player(this.assetManager);
            // this._player.on('click', this.fire);
             this._player.on("click",  (e: createjs.MouseEvent) => { this.fire(e, this._bullet) });
@@ -82,7 +82,7 @@ module scenes {
             this._score_text = new objects.Label("SCORE: "+this.score, "bold 40px", "Orbitron", "#FFFFFF", 25, 25, false);
 			this._health_text = new objects.Label("ENERGY: "+this._player.health, "bold 40px", "Orbitron", "#FFFFFF", 475, 25, false);
 			this._lives_text = new objects.Label("LIVES: "+this._player.lives, "bold 40px", "Orbitron", "#FFFFFF", 25, 525, false);
-			this._stage_text = new objects.Label("STAGE 01", "bold 40px", "Orbitron", "#FFFFFF", 400, 300, true);
+			this._stage_text = new objects.Label("STAGE 02", "bold 40px", "Orbitron", "#FFFFFF", 400, 300, true);
 
             this.stage_time = 0;
 
@@ -203,9 +203,13 @@ module scenes {
                         this.removeChild( e.currentTarget);                        
                     }
                     intersection = null;
-                }
-                
-            }                        
+                } 
+			}    
+			
+			if(e.currentTarget.y < -50){
+				this.removeChild(e.currentTarget)
+				console.log("Bullet removed");
+			}
         }
         
 
@@ -335,96 +339,97 @@ module scenes {
 
         private spawn_waves(){
 
+			
 			if(this.stage_loop == 0){
-				this.addChild(this._stage_text);
+                this.addChild(this._stage_text);
 			}else{
 				this.removeChild(this._stage_text);
-			}
+            }
 
-			if(this.stage_time  == 60*5){
-				this.stage_loop++;
-			}
-			
+            if(this.stage_time > 60*10 && this.stage_loop == 3){
+                objects.Game.currentScene = config.Scene.STAGE03;
+            }
+            
+            if(this.stage_loop < 3){
+                if(this.stage_time  == 60*5){
+                    this.stage_loop++;
+                }
+                
+    
+                if(this.stage_time  == 60*8){
+                    this.wave02(this._enemy01, 100, -100, 1);
+                    this.wave03(this._enemy02, 100, -100, 1);	
+                    this.wave02(this._enemy01, 100, -100, 2);
+                    this.wave03(this._enemy02, 100, -100, 2);
+                    this.wave02(this._enemy01, 100, -100, 3);
+                    this.wave03(this._enemy02, 100, -100, 3);
+                    this.wave02(this._enemy01, 100, -100, 4);
+                    this.wave03(this._enemy02, 100, -100, 4);
+                    this.wave02(this._enemy01, 100, -100, 4);
+                    this.wave03(this._enemy02, 100, -100, 4);
+                }
+                
+                if(this.stage_time == 60*12 ){
+                    this.wave01(this._enemy03, 100, -100, 1);
+                    this.wave01(this._enemy03, 200, -100, 2);
+                    this.wave01(this._enemy03, 300, -100, 3);
+                    this.wave01(this._enemy03, 400, -100, 4);
+                    this.wave01(this._enemy03, 500, -100, 5);
+                    this.wave01(this._enemy03, 600, -100, 6);
+                    this.wave01(this._enemy03, 700, -100, 7);
+                }
+                
+                if(this.stage_time == 60*15 ){
+                    this.wave01(this._enemy04, 700, -100, 1);
+                    this.wave01(this._enemy04, 600, -100, 2);
+                    this.wave01(this._enemy04, 500, -100, 3);
+                    this.wave01(this._enemy04, 400, -100, 4);
+                    this.wave01(this._enemy04, 300, -100, 5);
+                    this.wave01(this._enemy04, 200, -100, 6);
+                    this.wave01(this._enemy04, 100, -100, 7);
+                }
+                
+                
+                if(this.stage_time == 60*18 ){
+                    this.wave04(this._enemy05, 400, -100, 1);
+                    this.wave05(this._enemy06, 400, -100, 2);
+                    this.wave04(this._enemy05, 400, -100, 3);
+                    this.wave05(this._enemy06, 400, -100, 4);
+                    this.wave04(this._enemy05, 400, -100, 5);
+                    this.wave05(this._enemy06, 400, -100, 6);
+                    this.wave04(this._enemy05, 400, -100, 7);
+                    this.wave05(this._enemy06, 400, -100, 8);
+                    this.wave04(this._enemy05, 400, -100, 9);
+                    this.wave05(this._enemy06, 400, -100, 10);
+                    this.wave04(this._enemy05, 400, -100, 11);
+                    this.wave05(this._enemy06, 400, -100, 12);
+                    
+                }
+                
+                if(this.stage_time == 60*23 ){
+                    this.wave06(this._enemy07, 400, -100, 1);
+                    this.wave07(this._enemy08, 400, -100, 1);
+                    this.wave06(this._enemy07, 400, -100, 3);
+                    this.wave07(this._enemy08, 400, -100, 4);
+                    this.wave06(this._enemy07, 400, -100, 5);
+                    this.wave07(this._enemy08, 400, -100, 6);
+                    this.wave06(this._enemy07, 400, -100, 7);
+                    this.wave07(this._enemy08, 400, -100, 8);
+                    this.wave06(this._enemy07, 400, -100, 9);
+                    this.wave07(this._enemy08, 400, -100, 10);
+                    this.wave06(this._enemy07, 400, -100, 11);
+                    this.wave07(this._enemy08, 400, -100, 12);
+                                
+                }
+            }			
 
-            if(this.stage_time  == 60*8){
-				
-				this.wave02(this._enemy01, 100, -100, 1);
-				this.wave03(this._enemy02, 100, -100, 1);	
-				this.wave02(this._enemy01, 100, -100, 2);
-				this.wave03(this._enemy02, 100, -100, 2);
-				this.wave02(this._enemy01, 100, -100, 3);
-				this.wave03(this._enemy02, 100, -100, 3);
-				this.wave02(this._enemy01, 100, -100, 4);
-				this.wave03(this._enemy02, 100, -100, 4);
-				this.wave02(this._enemy01, 100, -100, 4);
-				this.wave03(this._enemy02, 100, -100, 4);
-			}
-			
-			if(this.stage_time == 60*12){
-				this.wave01(this._enemy03, 100, -100, 1);
-				this.wave01(this._enemy03, 200, -100, 2);
-				this.wave01(this._enemy03, 300, -100, 3);
-				this.wave01(this._enemy03, 400, -100, 4);
-				this.wave01(this._enemy03, 500, -100, 5);
-				this.wave01(this._enemy03, 600, -100, 6);
-				this.wave01(this._enemy03, 700, -100, 7);
-			}
-			
-			if(this.stage_time == 60*15){
-				this.wave01(this._enemy04, 700, -100, 1);
-				this.wave01(this._enemy04, 600, -100, 2);
-				this.wave01(this._enemy04, 500, -100, 3);
-				this.wave01(this._enemy04, 400, -100, 4);
-				this.wave01(this._enemy04, 300, -100, 5);
-				this.wave01(this._enemy04, 200, -100, 6);
-				this.wave01(this._enemy04, 100, -100, 7);
-			}
-			
-			
-			if(this.stage_time == 60*18){
-				this.wave04(this._enemy05, 400, -100, 1);
-				this.wave05(this._enemy06, 400, -100, 2);
-				this.wave04(this._enemy05, 400, -100, 3);
-				this.wave05(this._enemy06, 400, -100, 4);
-				this.wave04(this._enemy05, 400, -100, 5);
-				this.wave05(this._enemy06, 400, -100, 6);
-				this.wave04(this._enemy05, 400, -100, 7);
-				this.wave05(this._enemy06, 400, -100, 8);
-				this.wave04(this._enemy05, 400, -100, 9);
-				this.wave05(this._enemy06, 400, -100, 10);
-				this.wave04(this._enemy05, 400, -100, 11);
-				this.wave05(this._enemy06, 400, -100, 12);
-				
-			}
-			
-			if(this.stage_time == 60*23){
-				this.wave06(this._enemy07, 400, -100, 1);
-				this.wave07(this._enemy08, 400, -100, 1);
-				this.wave06(this._enemy07, 400, -100, 3);
-				this.wave07(this._enemy08, 400, -100, 4);
-				this.wave06(this._enemy07, 400, -100, 5);
-				this.wave07(this._enemy08, 400, -100, 6);
-				this.wave06(this._enemy07, 400, -100, 7);
-				this.wave07(this._enemy08, 400, -100, 8);
-				this.wave06(this._enemy07, 400, -100, 9);
-				this.wave07(this._enemy08, 400, -100, 10);
-				this.wave06(this._enemy07, 400, -100, 11);
-                this.wave07(this._enemy08, 400, -100, 12);
-                			
-			}
-
-			if(this.stage_time == 60*24){
-				this.stage_time = 0;	
-			}
-
-			if(this.stage_loop == 2){
-				this._stage_text.text = "STAGE COMPLETE!"
-				this.stage_time = 60*24;				
-				this.addChild(this._stage_text);
-			}
-
-			if(this.stage_time == 60*28){
-				objects.Game.currentScene = config.Scene.STAGE02;
+			if(this.stage_loop == 3 ){
+				this._stage_text = new objects.Label("STAGE COMPLETE!", "bold 40px", "Orbitron", "#FFFFFF", 400, 300, true); 	
+                this.addChild(this._stage_text);
+            }
+            
+            if(this.stage_time == 60*24 ){
+                    this.stage_time = 0;
 			}
         }
 

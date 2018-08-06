@@ -10,6 +10,8 @@ module objects {
 
         public Start(): void {
             this.name = "bullet"
+            this.scaleX = 1.3;
+            this.scaleY = 1.3;
         }
 
         public Update(): void {
@@ -18,6 +20,10 @@ module objects {
 
 
         public CheckBounds(): void{
+            if(this.y <= -100){
+                objects.Game.stage.removeChild(this);
+                console.log("Enemy removed")
+            }
         }
     }
 }

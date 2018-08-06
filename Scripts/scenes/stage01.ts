@@ -1,5 +1,5 @@
 module scenes {
-    export class PlayScene extends objects.Scene {
+    export class Stage01 extends objects.Scene {
 
         //Private Instance Variables
         private _background: objects.Background;
@@ -35,7 +35,8 @@ module scenes {
 
 
 		private stage_time: number;
-		private stage_loop: number = 0;
+        private stage_loop: number = 0;
+        private isComplete: boolean = false;
 
         //Constructor
         constructor(assetManager: createjs.LoadQueue) {
@@ -105,9 +106,8 @@ module scenes {
             this._background.Update();
             this._player.Update();
 
-            this.stage_time++;
-
             this.spawn_waves();
+            this.stage_time++;
 
             for(let i=0; i< this.children.length; i++){
                 if( this.getChildAt(i).name == "enemy" || this.getChildAt(i).name == "enemy_blt"){
@@ -138,7 +138,7 @@ module scenes {
 		}
         
         private enemy_attack(e: createjs.Event){
-			
+			/*
 			if(this.stage_time % 60 == 0 ){
 				let rand = Math.floor((Math.random() * 100) + 1);
 				if(rand <= 10){
@@ -152,10 +152,10 @@ module scenes {
 					.addEventListener("complete", (e: createjs.Event) => { this.blt_tween(e, blt) });					
 					//.call(blt_tween);
 				}		
-			}
-			if(e.currentTarget.y >= 600){
-                this.removeChild(e.currentTarget);
-                console.log("Enemy removed")
+			}*/
+			if(e.currentTarget.y <= 500){
+				this.removeChild(e.currentTarget);
+				console.log("Enemy removed");
             }
 		}
 		
@@ -192,7 +192,6 @@ module scenes {
                     let intersection = ndgmr.checkRectCollision(this.getChildAt(i), e.currentTarget);
                     if(intersection != null){
 						let enemy:any = this.getChildAt(i);
-						console.log(enemy.health);
 						enemy.health -= 10;
 						if(enemy.health <= 0){
 							this.kaboon(this.getChildAt(i));
@@ -204,8 +203,12 @@ module scenes {
                     }
                     intersection = null;
                 }
-                
-            }                        
+			} 
+			
+			if(e.currentTarget.y < -50){
+				this.removeChild(e.currentTarget)
+				console.log("Bullet removed");
+			}
         }
         
 
@@ -213,8 +216,8 @@ module scenes {
 		    var enemy:any = enemyX.clone();
 			enemy.x = posX;
 			enemy.y = posY;
-			enemy.health = this.enemy_health;
-			enemy.addEventListener("tick",  (e: createjs.Event) => { this.enemy_attack(e) });
+            enemy.health = this.enemy_health;
+            enemy.addEventListener("tick",  (e: createjs.Event) => { this.enemy_attack(e) });
             this.addChild(enemy);
 			createjs.Tween.get(enemy).wait(250*next).to({y:800}, 2000)
 			.call(() => {this.stage.removeChild(enemy); enemy.removeAllEventListeners();});
@@ -226,8 +229,8 @@ module scenes {
 			var enemy:any = enemyX.clone();
 			enemy.x = posX;
 			enemy.y = posY;
-			enemy.health = this.enemy_health;
-			enemy.addEventListener("tick",  (e: createjs.Event) => { this.enemy_attack(e) });
+            enemy.health = this.enemy_health;
+            
 			this.addChild(enemy);
 			createjs.Tween.get(enemy).wait(250*next)
 			.to({y:100}, 500)
@@ -244,7 +247,6 @@ module scenes {
 			enemy.x = posX;
 			enemy.y = posY;
 			enemy.health = this.enemy_health;
-			enemy.addEventListener("tick",  (e: createjs.Event) => { this.enemy_attack(e) });
 
 			this.addChild(enemy);
 			createjs.Tween.get(enemy).wait(250*next)
@@ -262,7 +264,6 @@ module scenes {
 			enemy.x = posX;
 			enemy.y = posY;
 			enemy.health = this.enemy_health;
-			enemy.addEventListener("tick",  (e: createjs.Event) => { this.enemy_attack(e) });
 
 			this.addChild(enemy);
 			createjs.Tween.get(enemy).wait(250*next)
@@ -281,7 +282,6 @@ module scenes {
 			enemy.x = posX;
 			enemy.y = posY;
 			enemy.health = this.enemy_health;
-			enemy.addEventListener("tick",  (e: createjs.Event) => { this.enemy_attack(e) });
 
 			this.addChild(enemy);
 			createjs.Tween.get(enemy).wait(250*next)
@@ -300,7 +300,6 @@ module scenes {
 			enemy.x = posX;
 			enemy.y = posY;
 			enemy.health = this.enemy_health;
-			enemy.addEventListener("tick",  (e: createjs.Event) => { this.enemy_attack(e) });
 
 			this.addChild(enemy);
 			createjs.Tween.get(enemy).wait(250*next)
@@ -320,7 +319,6 @@ module scenes {
 			enemy.x = posX;
 			enemy.y = posY;
 			enemy.health = this.enemy_health;
-			enemy.addEventListener("tick",  (e: createjs.Event) => { this.enemy_attack(e) });
 
 			this.addChild(enemy);
 			createjs.Tween.get(enemy).wait(250*next)
@@ -335,96 +333,97 @@ module scenes {
 
         private spawn_waves(){
 
+			
 			if(this.stage_loop == 0){
-				this.addChild(this._stage_text);
+                this.addChild(this._stage_text);
 			}else{
 				this.removeChild(this._stage_text);
-			}
+            }
 
-			if(this.stage_time  == 60*5){
-				this.stage_loop++;
-			}
-			
+            if(this.stage_time > 60*10 && this.stage_loop == 3){
+                objects.Game.currentScene = config.Scene.STAGE02;
+            }
+            
+            if(this.stage_loop < 3){
+                if(this.stage_time  == 60*5){
+                    this.stage_loop++;
+                }
+                
+    
+                if(this.stage_time  == 60*8){
+                    this.wave02(this._enemy01, 100, -100, 1);
+                    this.wave03(this._enemy02, 100, -100, 1);	
+                    this.wave02(this._enemy01, 100, -100, 2);
+                    this.wave03(this._enemy02, 100, -100, 2);
+                    this.wave02(this._enemy01, 100, -100, 3);
+                    this.wave03(this._enemy02, 100, -100, 3);
+                    this.wave02(this._enemy01, 100, -100, 4);
+                    this.wave03(this._enemy02, 100, -100, 4);
+                    this.wave02(this._enemy01, 100, -100, 4);
+                    this.wave03(this._enemy02, 100, -100, 4);
+                }
+                
+                if(this.stage_time == 60*12 ){
+                    this.wave01(this._enemy03, 100, -100, 1);
+                    this.wave01(this._enemy03, 200, -100, 2);
+                    this.wave01(this._enemy03, 300, -100, 3);
+                    this.wave01(this._enemy03, 400, -100, 4);
+                    this.wave01(this._enemy03, 500, -100, 5);
+                    this.wave01(this._enemy03, 600, -100, 6);
+                    this.wave01(this._enemy03, 700, -100, 7);
+                }
+                
+                if(this.stage_time == 60*15 ){
+                    this.wave01(this._enemy04, 700, -100, 1);
+                    this.wave01(this._enemy04, 600, -100, 2);
+                    this.wave01(this._enemy04, 500, -100, 3);
+                    this.wave01(this._enemy04, 400, -100, 4);
+                    this.wave01(this._enemy04, 300, -100, 5);
+                    this.wave01(this._enemy04, 200, -100, 6);
+                    this.wave01(this._enemy04, 100, -100, 7);
+                }
+                
+                
+                if(this.stage_time == 60*18 ){
+                    this.wave04(this._enemy05, 400, -100, 1);
+                    this.wave05(this._enemy06, 400, -100, 2);
+                    this.wave04(this._enemy05, 400, -100, 3);
+                    this.wave05(this._enemy06, 400, -100, 4);
+                    this.wave04(this._enemy05, 400, -100, 5);
+                    this.wave05(this._enemy06, 400, -100, 6);
+                    this.wave04(this._enemy05, 400, -100, 7);
+                    this.wave05(this._enemy06, 400, -100, 8);
+                    this.wave04(this._enemy05, 400, -100, 9);
+                    this.wave05(this._enemy06, 400, -100, 10);
+                    this.wave04(this._enemy05, 400, -100, 11);
+                    this.wave05(this._enemy06, 400, -100, 12);
+                    
+                }
+                
+                if(this.stage_time == 60*23 ){
+                    this.wave06(this._enemy07, 400, -100, 1);
+                    this.wave07(this._enemy08, 400, -100, 1);
+                    this.wave06(this._enemy07, 400, -100, 3);
+                    this.wave07(this._enemy08, 400, -100, 4);
+                    this.wave06(this._enemy07, 400, -100, 5);
+                    this.wave07(this._enemy08, 400, -100, 6);
+                    this.wave06(this._enemy07, 400, -100, 7);
+                    this.wave07(this._enemy08, 400, -100, 8);
+                    this.wave06(this._enemy07, 400, -100, 9);
+                    this.wave07(this._enemy08, 400, -100, 10);
+                    this.wave06(this._enemy07, 400, -100, 11);
+                    this.wave07(this._enemy08, 400, -100, 12);
+                                
+                }
+            }			
 
-            if(this.stage_time  == 60*8){
-				
-				this.wave02(this._enemy01, 100, -100, 1);
-				this.wave03(this._enemy02, 100, -100, 1);	
-				this.wave02(this._enemy01, 100, -100, 2);
-				this.wave03(this._enemy02, 100, -100, 2);
-				this.wave02(this._enemy01, 100, -100, 3);
-				this.wave03(this._enemy02, 100, -100, 3);
-				this.wave02(this._enemy01, 100, -100, 4);
-				this.wave03(this._enemy02, 100, -100, 4);
-				this.wave02(this._enemy01, 100, -100, 4);
-				this.wave03(this._enemy02, 100, -100, 4);
-			}
-			
-			if(this.stage_time == 60*12){
-				this.wave01(this._enemy03, 100, -100, 1);
-				this.wave01(this._enemy03, 200, -100, 2);
-				this.wave01(this._enemy03, 300, -100, 3);
-				this.wave01(this._enemy03, 400, -100, 4);
-				this.wave01(this._enemy03, 500, -100, 5);
-				this.wave01(this._enemy03, 600, -100, 6);
-				this.wave01(this._enemy03, 700, -100, 7);
-			}
-			
-			if(this.stage_time == 60*15){
-				this.wave01(this._enemy04, 700, -100, 1);
-				this.wave01(this._enemy04, 600, -100, 2);
-				this.wave01(this._enemy04, 500, -100, 3);
-				this.wave01(this._enemy04, 400, -100, 4);
-				this.wave01(this._enemy04, 300, -100, 5);
-				this.wave01(this._enemy04, 200, -100, 6);
-				this.wave01(this._enemy04, 100, -100, 7);
-			}
-			
-			
-			if(this.stage_time == 60*18){
-				this.wave04(this._enemy05, 400, -100, 1);
-				this.wave05(this._enemy06, 400, -100, 2);
-				this.wave04(this._enemy05, 400, -100, 3);
-				this.wave05(this._enemy06, 400, -100, 4);
-				this.wave04(this._enemy05, 400, -100, 5);
-				this.wave05(this._enemy06, 400, -100, 6);
-				this.wave04(this._enemy05, 400, -100, 7);
-				this.wave05(this._enemy06, 400, -100, 8);
-				this.wave04(this._enemy05, 400, -100, 9);
-				this.wave05(this._enemy06, 400, -100, 10);
-				this.wave04(this._enemy05, 400, -100, 11);
-				this.wave05(this._enemy06, 400, -100, 12);
-				
-			}
-			
-			if(this.stage_time == 60*23){
-				this.wave06(this._enemy07, 400, -100, 1);
-				this.wave07(this._enemy08, 400, -100, 1);
-				this.wave06(this._enemy07, 400, -100, 3);
-				this.wave07(this._enemy08, 400, -100, 4);
-				this.wave06(this._enemy07, 400, -100, 5);
-				this.wave07(this._enemy08, 400, -100, 6);
-				this.wave06(this._enemy07, 400, -100, 7);
-				this.wave07(this._enemy08, 400, -100, 8);
-				this.wave06(this._enemy07, 400, -100, 9);
-				this.wave07(this._enemy08, 400, -100, 10);
-				this.wave06(this._enemy07, 400, -100, 11);
-                this.wave07(this._enemy08, 400, -100, 12);
-                			
-			}
-
-			if(this.stage_time == 60*24){
-				this.stage_time = 0;	
-			}
-
-			if(this.stage_loop == 2){
-				this._stage_text.text = "STAGE COMPLETE!"
-				this.stage_time = 60*24;				
-				this.addChild(this._stage_text);
-			}
-
-			if(this.stage_time == 60*28){
-				objects.Game.currentScene = config.Scene.STAGE02;
+			if(this.stage_loop == 3 ){
+				this._stage_text = new objects.Label("STAGE COMPLETE!", "bold 40px", "Orbitron", "#FFFFFF", 400, 300, true); 	
+                this.addChild(this._stage_text);
+            }
+            
+            if(this.stage_time == 60*24 ){
+                    this.stage_time = 0;
 			}
         }
 

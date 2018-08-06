@@ -4,7 +4,8 @@ module objects {
         public static assetManager: createjs.LoadQueue;
         public static currentScene: number;
         public static explosionAtlas: createjs.SpriteSheet;
-        public static score: number;
+        public static high_score: number;
+        public static current_score: number;
 
     }
 }

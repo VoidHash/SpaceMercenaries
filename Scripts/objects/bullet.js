@@ -20,11 +20,17 @@ var objects;
         }
         Bullet.prototype.Start = function () {
             this.name = "bullet";
+            this.scaleX = 1.3;
+            this.scaleY = 1.3;
         };
         Bullet.prototype.Update = function () {
             this.CheckBounds();
         };
         Bullet.prototype.CheckBounds = function () {
+            if (this.y <= -100) {
+                objects.Game.stage.removeChild(this);
+                console.log("Enemy removed");
+            }
         };
         return Bullet;
     }(objects.GameObject));

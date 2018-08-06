@@ -17,8 +17,6 @@ var objects;
             if (_scaleX === void 0) { _scaleX = 1; }
             if (_scaleY === void 0) { _scaleY = 1; }
             var _this = _super.call(this, assetManager, assetName) || this;
-            //private instance variables
-            _this.health = 30;
             _this.scaleX = _scaleX;
             _this.scaleY = _scaleY;
             _this.Start();
@@ -26,17 +24,12 @@ var objects;
         }
         Enemy.prototype.Start = function () {
             this.rotation = 180;
-            this.health = 30;
+            this.health = 5;
             this.name = "enemy";
         };
         Enemy.prototype.Update = function () {
-            this.CheckBounds();
         };
         Enemy.prototype.CheckBounds = function () {
-            if (this.y >= 800) {
-                objects.Game.stage.removeChild(this);
-                console.log("Enemy removed");
-            }
         };
         return Enemy;
     }(objects.GameObject));
