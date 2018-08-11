@@ -18,7 +18,7 @@ var scenes;
             //Enemy Health
             _this.enemy_health = 30;
             _this.stage_loop = 0;
-            _this.isComplete = false;
+            _this.bossDefeated = false;
             _this.Start();
             return _this;
         }
@@ -38,8 +38,8 @@ var scenes;
             this._enemy06 = new objects.Enemy(this.assetManager, "enemy06", 0.05, 0.05);
             this._enemy07 = new objects.Enemy(this.assetManager, "enemy07", 0.05, 0.05);
             this._enemy08 = new objects.Enemy(this.assetManager, "enemy08", 0.08, 0.08);
-            this._enemy08.x = 200;
-            this._enemy08.y = 200;
+            this._boss = new objects.Boss(this.assetManager, "boss01");
+            this._boss.addEventListener("tick", function (e) { _this.boss_attack(e); });
             this._explosion = new objects.Explosion();
             this._bullet = new objects.Bullet(this.assetManager, "bullet01");
             this._enemy_blt = new objects.Bullet(this.assetManager, "bullet02");
@@ -52,7 +52,9 @@ var scenes;
             this._health_text = new objects.Label("ENERGY: " + this._player.health, "bold 40px", "Orbitron", "#FFFFFF", 475, 25, false);
             this._lives_text = new objects.Label("LIVES: " + this._player.lives, "bold 40px", "Orbitron", "#FFFFFF", 25, 525, false);
             this._stage_text = new objects.Label("STAGE 01", "bold 40px", "Orbitron", "#FFFFFF", 400, 300, true);
+            this._boss_text = new objects.Label("BOSS ENERGY: " + this._boss.health, "bold 30px", "Orbitron", "#FFFFFF", 425, 525, false);
             this.stage_time = 0;
+            objects.Game.stage_time = this.stage_time;
             this.Main();
         };
         Stage01.prototype.Main = function () {
@@ -61,6 +63,7 @@ var scenes;
             this.addChild(this._health_text);
             this.addChild(this._lives_text);
             this.addChild(this._player);
+            //this.addChild(this._boss);
             //this.addChild(this._enemy08);
             this.Update();
         };
@@ -69,8 +72,10 @@ var scenes;
             this._player.Update();
             this.spawn_waves();
             this.stage_time++;
+            objects.Game.stage_time = this.stage_time;
             for (var i = 0; i < this.children.length; i++) {
-                if (this.getChildAt(i).name == "enemy" || this.getChildAt(i).name == "enemy_blt") {
+                if (this.getChildAt(i).name == "enemy" ||
+                    this.getChildAt(i).name == "enemy_blt" || this.getChildAt(i).name == "boss") {
                     // Enemies X Player
                     var intersection = ndgmr.checkRectCollision(this.getChildAt(i), this._player);
                     if (intersection != null) {
@@ -92,6 +97,19 @@ var scenes;
                     }
                     intersection = null;
                 }
+            }
+        };
+        Stage01.prototype.boss_attack = function (e) {
+            var _this = this;
+            if (this.stage_time % 30 == 0) {
+                var blt_1 = this._enemy_blt.clone();
+                blt_1.x = e.currentTarget.x;
+                blt_1.y = e.currentTarget.y;
+                blt_1.name = "enemy_blt";
+                this.addChild(blt_1);
+                createjs.Tween.get(blt_1)
+                    .to({ x: this._player.x, y: this._player.y }, 1500)
+                    .addEventListener("complete", function (e) { _this.blt_tween(e, blt_1); });
             }
         };
         Stage01.prototype.enemy_attack = function (e) {
@@ -141,16 +159,28 @@ var scenes;
         };
         Stage01.prototype.bullet_collision = function (e) {
             for (var i = 0; i < this.children.length; i++) {
-                if (this.getChildAt(i).name == "enemy") {
+                if (this.getChildAt(i).name == "enemy" || this.getChildAt(i).name == "boss") {
                     var intersection = ndgmr.checkRectCollision(this.getChildAt(i), e.currentTarget);
                     if (intersection != null) {
                         var enemy = this.getChildAt(i);
                         enemy.health -= 10;
                         if (enemy.health <= 0) {
                             this.kaboon(this.getChildAt(i));
-                            this.removeChild(this.getChildAt(i));
-                            this.score = this.score + 10;
-                            this._score_text.text = "SCORE: " + this.score;
+                            if (this.getChildAt(i).name != "boss") {
+                                this.removeChild(this.getChildAt(i));
+                                this.score = this.score + 10;
+                                this._score_text.text = "SCORE: " + this.score;
+                            }
+                        }
+                        if (this.getChildAt(i).name == "boss") {
+                            var enemy_1 = this.getChildAt(i);
+                            this._boss_text.text = "BOSS ENERGY: " + enemy_1.health;
+                            if (enemy_1.health <= 0) {
+                                this.bossDefeated = true;
+                                this.removeChild(this._boss_text);
+                                this.removeChild(this.getChildAt(i));
+                                console.log("Boss Defeated: " + this.bossDefeated);
+                            }
                         }
                         this.removeChild(e.currentTarget);
                     }
@@ -168,7 +198,7 @@ var scenes;
             enemy.x = posX;
             enemy.y = posY;
             enemy.health = this.enemy_health;
-            enemy.addEventListener("tick", function (e) { _this.enemy_attack(e); });
+            //enemy.addEventListener("tick",  (e: createjs.Event) => { this.enemy_attack(e) });
             this.addChild(enemy);
             createjs.Tween.get(enemy).wait(250 * next).to({ y: 800 }, 2000)
                 .call(function () { _this.stage.removeChild(enemy); enemy.removeAllEventListeners(); });
@@ -280,9 +310,6 @@ var scenes;
             else {
                 this.removeChild(this._stage_text);
             }
-            if (this.stage_time > 60 * 10 && this.stage_loop == 3) {
-                objects.Game.currentScene = config.Scene.STAGE02;
-            }
             if (this.stage_loop < 3) {
                 if (this.stage_time == 60 * 5) {
                     this.stage_loop++;
@@ -345,10 +372,22 @@ var scenes;
                     this.wave06(this._enemy07, 400, -100, 11);
                     this.wave07(this._enemy08, 400, -100, 12);
                 }
+                if (this.stage_loop == 3) {
+                    objects.Scene.music.stop();
+                    objects.Scene.music = createjs.Sound.play("boss_music");
+                    objects.Scene.music.loop = -1;
+                    objects.Scene.music.volume = 1;
+                    this.addChild(this._boss_text);
+                    this.addChild(this._boss);
+                    this.bossDefeated = false;
+                }
             }
-            if (this.stage_loop == 3) {
+            if (this._boss.health <= 0) {
                 this._stage_text = new objects.Label("STAGE COMPLETE!", "bold 40px", "Orbitron", "#FFFFFF", 400, 300, true);
                 this.addChild(this._stage_text);
+            }
+            if (this._boss.health <= 0 && this.stage_time % 240 == 0) {
+                objects.Game.currentScene = config.Scene.STAGE02;
             }
             if (this.stage_time == 60 * 24) {
                 this.stage_time = 0;

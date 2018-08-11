@@ -6,6 +6,7 @@ module objects {
         public static explosionAtlas: createjs.SpriteSheet;
         public static high_score: number;
         public static current_score: number;
+        public static stage_time: number;
 
     }
 }

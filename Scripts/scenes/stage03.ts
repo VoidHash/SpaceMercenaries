@@ -16,6 +16,8 @@ module scenes {
 		private _enemy07: objects.Enemy;
 		private _enemy08: objects.Enemy;
 
+		private _boss: objects.Boss;
+
 		private _explosion: objects.Explosion;
 
 		private _bullet: objects.Bullet;
@@ -26,6 +28,7 @@ module scenes {
         private _score_text: objects.Label;
 		private _health_text: objects.Label;
 		private _stage_text: objects.Label;
+		private _boss_text: objects.Label;
 
         //Player Stats
 		private score: number;
@@ -35,7 +38,8 @@ module scenes {
 
 
 		private stage_time: number;
-		private stage_loop: number = 0;
+        private stage_loop: number = 0;
+        private bossDefeated: boolean = false;
 
         //Constructor
         constructor(assetManager: createjs.LoadQueue) {
@@ -64,8 +68,8 @@ module scenes {
 			this._enemy07 = new objects.Enemy(this.assetManager, "enemy07", 0.05, 0.05);
 			this._enemy08 = new objects.Enemy(this.assetManager, "enemy08", 0.08, 0.08);
 
-			this._enemy08.x = 200;
-			this._enemy08.y = 200;
+			this._boss = new objects.Boss(this.assetManager, "boss02");
+			this._boss.addEventListener("tick",  (e: createjs.Event) => { this.boss_attack(e) });
 
 			this._explosion = new objects.Explosion();
 
@@ -73,18 +77,21 @@ module scenes {
 			this._enemy_blt = new objects.Bullet(this.assetManager, "bullet02");
 
             this._background = new objects.Background(this.assetManager,"background03");
-            this._player = new objects.Player(this.assetManager);
+			this._player = new objects.Player(this.assetManager);
+			
            // this._player.on('click', this.fire);
             this._player.on("click",  (e: createjs.MouseEvent) => { this.fire(e, this._bullet) });
 
-            this.score = 0;
+            this.score = objects.Game.current_score;
 
             this._score_text = new objects.Label("SCORE: "+this.score, "bold 40px", "Orbitron", "#FFFFFF", 25, 25, false);
 			this._health_text = new objects.Label("ENERGY: "+this._player.health, "bold 40px", "Orbitron", "#FFFFFF", 475, 25, false);
 			this._lives_text = new objects.Label("LIVES: "+this._player.lives, "bold 40px", "Orbitron", "#FFFFFF", 25, 525, false);
-			this._stage_text = new objects.Label("STAGE 01", "bold 40px", "Orbitron", "#FFFFFF", 400, 300, true);
+			this._stage_text = new objects.Label("STAGE 03", "bold 40px", "Orbitron", "#FFFFFF", 400, 300, true);
+			this._boss_text = new objects.Label("BOSS ENERGY: "+ this._boss.health, "bold 30px", "Orbitron", "#FFFFFF", 425, 525, false);
 
-            this.stage_time = 0;
+			this.stage_time = 0;
+			objects.Game.stage_time = this.stage_time;
 
             this.Main();
 		}
@@ -95,6 +102,7 @@ module scenes {
 			this.addChild(this._health_text);
 			this.addChild(this._lives_text);
 			this.addChild(this._player);
+			//this.addChild(this._boss);
 
 			//this.addChild(this._enemy08);
 			
@@ -105,12 +113,13 @@ module scenes {
             this._background.Update();
             this._player.Update();
 
-            this.stage_time++;
-
             this.spawn_waves();
+			this.stage_time++;
+			objects.Game.stage_time = this.stage_time;
 
             for(let i=0; i< this.children.length; i++){
-                if( this.getChildAt(i).name == "enemy" || this.getChildAt(i).name == "enemy_blt"){
+				if( this.getChildAt(i).name == "enemy" || 
+				this.getChildAt(i).name == "enemy_blt" || this.getChildAt(i).name == "boss"){
 
 					// Enemies X Player
                     let intersection = ndgmr.checkRectCollision(this.getChildAt(i), this._player);
@@ -134,7 +143,22 @@ module scenes {
 
                     intersection = null;
 				}
+
             }
+		}
+
+		private boss_attack(e: createjs.Event){
+			if(this.stage_time % 40 == 0 ){
+				let blt:any = this._enemy_blt.clone();
+				blt.x = e.currentTarget.x;
+				blt.y = e.currentTarget.y;
+				blt.name = "enemy_blt";						
+				this.addChild(blt);
+				createjs.Tween.get(blt)
+				.to({x: this._player.x, y: this._player.y}, 1500)
+				.addEventListener("complete", (e: createjs.Event) => { this.blt_tween(e, blt) });
+				
+			}
 		}
         
         private enemy_attack(e: createjs.Event){
@@ -154,8 +178,8 @@ module scenes {
 				}		
 			}
 			if(e.currentTarget.y >= 600){
-                this.removeChild(e.currentTarget);
-                console.log("Enemy removed")
+				this.removeChild(e.currentTarget);
+				console.log("Enemy removed");
             }
 		}
 		
@@ -164,7 +188,7 @@ module scenes {
 			this.removeChild(blt);
 		}
 
-		private kaboon(gameObject: createjs.DisplayObject): void{
+		private kaboon(gameObject: createjs.DisplayObject): void {
 			
 			let kaboon = this._explosion.clone(); 
 			kaboon.x = gameObject.x;
@@ -188,27 +212,40 @@ module scenes {
         private bullet_collision(e: createjs.Event): void {
             
             for(let i=0; i< this.children.length; i++){
-                if(this.getChildAt(i).name == "enemy"){                   
+                if(this.getChildAt(i).name == "enemy" || this.getChildAt(i).name == "boss"){                   
                     let intersection = ndgmr.checkRectCollision(this.getChildAt(i), e.currentTarget);
                     if(intersection != null){
 						let enemy:any = this.getChildAt(i);
-						console.log(enemy.health);
 						enemy.health -= 10;
 						if(enemy.health <= 0){
 							this.kaboon(this.getChildAt(i));
-							this.removeChild(this.getChildAt(i));
-							this.score = this.score + 10;
-                        	this._score_text.text = "SCORE: "+this.score;
+							if(this.getChildAt(i).name != "boss"){
+								this.removeChild(this.getChildAt(i));
+								this.score = this.score + 10;
+                        		this._score_text.text = "SCORE: "+this.score;
+							}							
 						}   
+						if(this.getChildAt(i).name == "boss"){
+							let enemy:any = this.getChildAt(i);
+							this._boss_text.text = "BOSS ENERGY: "+enemy.health;
+							if(enemy.health <= 0){
+								this.bossDefeated = true;
+								this.removeChild(this._boss_text);
+								this.removeChild(this.getChildAt(i));
+								console.log("Boss Defeated: "+this.bossDefeated);
+							}
+						}
                         this.removeChild( e.currentTarget);                        
                     }
                     intersection = null;
-                }
-			}    
+				}
+
+			} 
+			
 			if(e.currentTarget.y < -50){
 				this.removeChild(e.currentTarget)
 				console.log("Bullet removed");
-			}                    
+			}
         }
         
 
@@ -247,7 +284,7 @@ module scenes {
 			enemy.x = posX;
 			enemy.y = posY;
 			enemy.health = this.enemy_health;
-            enemy.addEventListener("tick",  (e: createjs.Event) => { this.enemy_attack(e) });
+			enemy.addEventListener("tick",  (e: createjs.Event) => { this.enemy_attack(e) });
 			this.addChild(enemy);
 			createjs.Tween.get(enemy).wait(250*next)
 			.to({y:100, x: 750}, 500)
@@ -264,7 +301,7 @@ module scenes {
 			enemy.x = posX;
 			enemy.y = posY;
 			enemy.health = this.enemy_health;
-            enemy.addEventListener("tick",  (e: createjs.Event) => { this.enemy_attack(e) });
+			enemy.addEventListener("tick",  (e: createjs.Event) => { this.enemy_attack(e) });
 			this.addChild(enemy);
 			createjs.Tween.get(enemy).wait(250*next)
 			.to({y:100, x: 400}, 500)
@@ -282,7 +319,7 @@ module scenes {
 			enemy.x = posX;
 			enemy.y = posY;
 			enemy.health = this.enemy_health;
-            enemy.addEventListener("tick",  (e: createjs.Event) => { this.enemy_attack(e) });
+			enemy.addEventListener("tick",  (e: createjs.Event) => { this.enemy_attack(e) });
 			this.addChild(enemy);
 			createjs.Tween.get(enemy).wait(250*next)
 			.to({y:100, x: 400}, 500)
@@ -300,7 +337,7 @@ module scenes {
 			enemy.x = posX;
 			enemy.y = posY;
 			enemy.health = this.enemy_health;
-            enemy.addEventListener("tick",  (e: createjs.Event) => { this.enemy_attack(e) });
+			enemy.addEventListener("tick",  (e: createjs.Event) => { this.enemy_attack(e) });
 			this.addChild(enemy);
 			createjs.Tween.get(enemy).wait(250*next)
 			.to({x:400, y: 100},500)
@@ -319,7 +356,7 @@ module scenes {
 			enemy.x = posX;
 			enemy.y = posY;
 			enemy.health = this.enemy_health;
-            enemy.addEventListener("tick",  (e: createjs.Event) => { this.enemy_attack(e) });
+			enemy.addEventListener("tick",  (e: createjs.Event) => { this.enemy_attack(e) });
 			this.addChild(enemy);
 			createjs.Tween.get(enemy).wait(250*next)
 			.to({x:400, y: 100},500)
@@ -338,11 +375,7 @@ module scenes {
                 this.addChild(this._stage_text);
 			}else{
 				this.removeChild(this._stage_text);
-            }
-
-            if(this.stage_time > 60*10 && this.stage_loop == 3){
-                objects.Game.currentScene = config.Scene.OVER;
-            }
+			}
             
             if(this.stage_loop < 3){
                 if(this.stage_time  == 60*5){
@@ -351,75 +384,89 @@ module scenes {
                 
     
                 if(this.stage_time  == 60*8){
-                    this.wave02(this._enemy01, 100, -100, 1);
-                    this.wave03(this._enemy02, 100, -100, 1);	
-                    this.wave02(this._enemy01, 100, -100, 2);
-                    this.wave03(this._enemy02, 100, -100, 2);
-                    this.wave02(this._enemy01, 100, -100, 3);
-                    this.wave03(this._enemy02, 100, -100, 3);
-                    this.wave02(this._enemy01, 100, -100, 4);
-                    this.wave03(this._enemy02, 100, -100, 4);
-                    this.wave02(this._enemy01, 100, -100, 4);
-                    this.wave03(this._enemy02, 100, -100, 4);
+                    this.wave02(this._enemy08, 100, -100, 1);
+                    this.wave03(this._enemy08, 100, -100, 1);	
+                    this.wave02(this._enemy08, 100, -100, 2);
+                    this.wave03(this._enemy08, 100, -100, 2);
+                    this.wave02(this._enemy08, 100, -100, 3);
+                    this.wave03(this._enemy08, 100, -100, 3);
+                    this.wave02(this._enemy08, 100, -100, 4);
+                    this.wave03(this._enemy08, 100, -100, 4);
+                    this.wave02(this._enemy08, 100, -100, 4);
+                    this.wave03(this._enemy08, 100, -100, 4);
                 }
                 
                 if(this.stage_time == 60*12 ){
-                    this.wave01(this._enemy03, 100, -100, 1);
-                    this.wave01(this._enemy03, 200, -100, 2);
-                    this.wave01(this._enemy03, 300, -100, 3);
-                    this.wave01(this._enemy03, 400, -100, 4);
-                    this.wave01(this._enemy03, 500, -100, 5);
-                    this.wave01(this._enemy03, 600, -100, 6);
-                    this.wave01(this._enemy03, 700, -100, 7);
+                    this.wave01(this._enemy02, 100, -100, 1);
+                    this.wave01(this._enemy02, 200, -100, 2);
+                    this.wave01(this._enemy02, 300, -100, 3);
+                    this.wave01(this._enemy02, 400, -100, 4);
+                    this.wave01(this._enemy02, 500, -100, 5);
+                    this.wave01(this._enemy02, 600, -100, 6);
+                    this.wave01(this._enemy02, 700, -100, 7);
                 }
                 
                 if(this.stage_time == 60*15 ){
-                    this.wave01(this._enemy04, 700, -100, 1);
-                    this.wave01(this._enemy04, 600, -100, 2);
-                    this.wave01(this._enemy04, 500, -100, 3);
-                    this.wave01(this._enemy04, 400, -100, 4);
-                    this.wave01(this._enemy04, 300, -100, 5);
-                    this.wave01(this._enemy04, 200, -100, 6);
-                    this.wave01(this._enemy04, 100, -100, 7);
+                    this.wave01(this._enemy02, 700, -100, 1);
+                    this.wave01(this._enemy02, 600, -100, 2);
+                    this.wave01(this._enemy02, 500, -100, 3);
+                    this.wave01(this._enemy02, 400, -100, 4);
+                    this.wave01(this._enemy02, 300, -100, 5);
+                    this.wave01(this._enemy02, 200, -100, 6);
+                    this.wave01(this._enemy02, 100, -100, 7);
                 }
                 
                 
                 if(this.stage_time == 60*18 ){
-                    this.wave04(this._enemy05, 400, -100, 1);
-                    this.wave05(this._enemy06, 400, -100, 2);
-                    this.wave04(this._enemy05, 400, -100, 3);
-                    this.wave05(this._enemy06, 400, -100, 4);
-                    this.wave04(this._enemy05, 400, -100, 5);
-                    this.wave05(this._enemy06, 400, -100, 6);
-                    this.wave04(this._enemy05, 400, -100, 7);
-                    this.wave05(this._enemy06, 400, -100, 8);
-                    this.wave04(this._enemy05, 400, -100, 9);
-                    this.wave05(this._enemy06, 400, -100, 10);
-                    this.wave04(this._enemy05, 400, -100, 11);
-                    this.wave05(this._enemy06, 400, -100, 12);
+                    this.wave04(this._enemy04, 400, -100, 1);
+                    this.wave05(this._enemy04, 400, -100, 2);
+                    this.wave04(this._enemy04, 400, -100, 3);
+                    this.wave05(this._enemy04, 400, -100, 4);
+                    this.wave04(this._enemy04, 400, -100, 5);
+                    this.wave05(this._enemy04, 400, -100, 6);
+                    this.wave04(this._enemy04, 400, -100, 7);
+                    this.wave05(this._enemy04, 400, -100, 8);
+                    this.wave04(this._enemy04, 400, -100, 9);
+                    this.wave05(this._enemy04, 400, -100, 10);
+                    this.wave04(this._enemy04, 400, -100, 11);
+                    this.wave05(this._enemy04, 400, -100, 12);
                     
                 }
                 
                 if(this.stage_time == 60*23 ){
-                    this.wave06(this._enemy07, 400, -100, 1);
-                    this.wave07(this._enemy08, 400, -100, 1);
-                    this.wave06(this._enemy07, 400, -100, 3);
-                    this.wave07(this._enemy08, 400, -100, 4);
-                    this.wave06(this._enemy07, 400, -100, 5);
-                    this.wave07(this._enemy08, 400, -100, 6);
-                    this.wave06(this._enemy07, 400, -100, 7);
-                    this.wave07(this._enemy08, 400, -100, 8);
-                    this.wave06(this._enemy07, 400, -100, 9);
-                    this.wave07(this._enemy08, 400, -100, 10);
-                    this.wave06(this._enemy07, 400, -100, 11);
-                    this.wave07(this._enemy08, 400, -100, 12);
-                                
-                }
-            }			
+                    this.wave06(this._enemy05, 400, -100, 1);
+                    this.wave07(this._enemy05, 400, -100, 1);
+                    this.wave06(this._enemy05, 400, -100, 3);
+                    this.wave07(this._enemy05, 400, -100, 4);
+                    this.wave06(this._enemy05, 400, -100, 5);
+                    this.wave07(this._enemy05, 400, -100, 6);
+                    this.wave06(this._enemy05, 400, -100, 7);
+                    this.wave07(this._enemy05, 400, -100, 8);
+                    this.wave06(this._enemy05, 400, -100, 9);
+                    this.wave07(this._enemy05, 400, -100, 10);
+                    this.wave06(this._enemy05, 400, -100, 11);
+                    this.wave07(this._enemy05, 400, -100, 12);
+				}
 
-			if(this.stage_loop == 3 ){
+				if(this.stage_loop == 3 ){
+					objects.Scene.music.stop();
+					objects.Scene.music = createjs.Sound.play("boss_music");
+					objects.Scene.music.loop = -1;
+					objects.Scene.music.volume = 1;
+					this.addChild(this._boss_text);
+					this.addChild(this._boss);
+					this.bossDefeated = false;
+				}				
+			}
+
+			if(this._boss.health <= 0){
 				this._stage_text = new objects.Label("STAGE COMPLETE!", "bold 40px", "Orbitron", "#FFFFFF", 400, 300, true); 	
                 this.addChild(this._stage_text);
+			}
+			
+			
+            if(this._boss.health <= 0 && this.stage_time % 240 == 0){
+                objects.Game.currentScene = config.Scene.OVER;
             }
             
             if(this.stage_time == 60*24 ){
